@@ -1,4 +1,4 @@
-from utils import BaseSolver, timing
+from utils import BaseSolver, timing, print_iterations
     
 
 class Bisection(BaseSolver):
@@ -28,7 +28,6 @@ class Bisection(BaseSolver):
             if fr * fa < 0:
                 self.b = r
                 fb = fr
-            
             else:
                 self.a = r
                 fa = fr
@@ -38,21 +37,21 @@ class Bisection(BaseSolver):
         self.root = r
         return r
     
-    
-def f(x):
-    return x**3 - 4*x + 1
-
 
 def main():
+
+    def func(x):
+        return x**3 - 4*x + 1
+
     interval = [0, 1]
     num_iterations = 200
     atol = 1e-6
     
-    bisection = Bisection(f, interval, num_iterations, atol, collect=True)
-    root = bisection.solve()
+    solver = Bisection(func, interval, num_iterations, atol, collect=True)
+    root = solver.solve()
     
-    bisection.print_result()
-    bisection.print_iterations() 
+    solver.print_result()
+    print_iterations(solver.get_iteration_data()) 
 
 
 if __name__ == '__main__':

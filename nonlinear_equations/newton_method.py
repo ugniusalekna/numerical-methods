@@ -1,4 +1,4 @@
-from utils import BaseSolver, timing
+from utils import BaseSolver, timing, print_iterations
 
 
 class NewtonRaphson(BaseSolver):
@@ -21,37 +21,37 @@ class NewtonRaphson(BaseSolver):
             
             r = x - fx / dfdx
             
+            if self.collect:
+                self.data[self.iter] = (x, r)
+            
             if abs(r - x) < self.atol:
                 self.root = r
                 return r
             
-            if self.collect:
-                self.data[self.iter] = (x, r)
-
             x = r
             self.iter += 1
             
         self.root = r
         return r
-    
-
-def f(x):
-    return x**2 - 2
-
-def df(x):
-    return 2 * x
 
 
 def main():
+
+    def f(x):
+        return x**2 - 2
+
+    def df(x):
+        return 2 * x
+
     x0 = 1.0
     num_iterations = 200
     atol = 1e-6
     
-    newton = NewtonRaphson(f, df, x0, num_iterations, atol, collect=True)
-    root = newton.solve()
+    solver = NewtonRaphson(f, df, x0, num_iterations, atol, collect=True)
+    root = solver.solve()
     
-    newton.print_result()
-    newton.print_iterations()    
+    solver.print_result()
+    print_iterations(solver.get_iteration_data()) 
     
 
 if __name__ == '__main__':

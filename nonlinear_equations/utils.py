@@ -22,17 +22,17 @@ def print_iterations(iteration_data, m=5):
     
     if tot <= 2 * m:
         for i, (x_i, f_x_i) in iteration_data.items():
-            print(f"{i:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
+            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
     else:
         for i in range(m):
             x_i, f_x_i = iteration_data[i]
-            print(f"{i:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
+            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
         
         print(f"{'...':<10} {'...':<25} {'...':<25}")
         
         for i in range(tot - m, tot):
             x_i, f_x_i = iteration_data[i]
-            print(f"{i:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
+            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
             
             
 class BaseSolver:
@@ -57,10 +57,6 @@ class BaseSolver:
         if self.root is None:
             print("Run the solve method first.")
         elif self.iter < self.n:
-            print(f"Root found: {self.root:.10f} after {self.iter + 1} iterations.")
+            print(f"Root found: {self.root:.10f} after {self.iter+1} iterations.")
         else:
             print(f"Maximum iterations ({self.n}) reached. Last approximation: {self.root:.10f}")
-
-    def print_iterations(self, m=5):
-        assert self.collect, "Cannot print iterations unless collect=True."
-        print_iterations(self.data, m)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils import BaseSolver, timing
+from utils import BaseSolver, timing, print_iterations
 
 
 class FixedPointIteration(BaseSolver):
@@ -30,20 +30,20 @@ class FixedPointIteration(BaseSolver):
         return r
     
 
-def g(x):
-    return np.sqrt(4 + x)
-
-
 def main():
+
+    def g(x):
+        return np.sqrt(4 + x)
+
     x0 = 0
     num_iterations = 200
     atol = 1e-6
     
-    fpi = FixedPointIteration(g, x0, num_iterations, atol, collect=True)
-    root = fpi.solve()
+    solver = FixedPointIteration(g, x0, num_iterations, atol, collect=True)
+    root = solver.solve()
     
-    fpi.print_result()
-    fpi.print_iterations()
+    solver.print_result()
+    print_iterations(solver.get_iteration_data()) 
 
 
 if __name__ == '__main__':

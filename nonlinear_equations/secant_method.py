@@ -1,4 +1,4 @@
-from utils import BaseSolver, timing
+from utils import BaseSolver, timing, print_iterations
 
 
 class Secant(BaseSolver):
@@ -17,12 +17,12 @@ class Secant(BaseSolver):
                         
             r = self.x1 - fx1 * (self.x1 - self.x0) / (fx1 - fx0)
             
+            if self.collect:
+                self.data[self.iter] = (self.x1, r)
+            
             if abs(r - self.x1) < self.atol:
                 self.root = r
                 return r
-            
-            if self.collect:
-                self.data[self.iter] = (self.x1, r)
 
             self.x0 = self.x1
             self.x1 = r
@@ -32,21 +32,23 @@ class Secant(BaseSolver):
         return r
     
 
-def f(x):
-    return x**2 - 2
-
-
 def main():
+
+    def f(x):
+        return x**2 - 2
+
+    h = 1e-6
     x0 = 1.0
-    x1 = 1.01
+    x1 = x0 + h
+    
     num_iterations = 200
     atol = 1e-6
     
-    secant = Secant(f, x0, x1, num_iterations, atol, collect=True)
-    root = secant.solve()
+    solver = Secant(f, x0, x1, num_iterations, atol, collect=True)
+    root = solver.solve()
     
-    secant.print_result()
-    secant.print_iterations()
+    solver.print_result()
+    print_iterations(solver.get_iteration_data())
     
 
 if __name__ == '__main__':

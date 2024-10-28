@@ -1,42 +1,34 @@
-from utils import BaseSolver, timing, print_iterations
+from utils import SolverBase, print_iterations
     
 
-class Bisection(BaseSolver):
+class BisectionMethod(SolverBase):
     def __init__(self, func, interval, num_iterations=100, atol=1e-6, collect=True):
         super().__init__(num_iterations, atol, collect)
-        self.f = func
-        self.interval = interval
+        self.func = func
         self.a, self.b = interval
         
-    @timing
-    def solve(self):
-        fa, fb = self.f(self.a), self.f(self.b)
-
-        assert fa * fb < 0, "f(a) * f(b) must be less than 0"
+        self.fa = self.func(self.a)
+        self.fb = self.func(self.b)
         
-        while abs(self.b - self.a) >= 2 * self.atol or self.i < self.n:
-            r = (self.a + self.b) / 2
-            fr = self.f(r)
-            
-            if self.collect:
-                self.data[self.iter] = (r, fr)
+        assert self.fa * self.fb < 0, "f(a) * f(b) must be less than 0"
 
-            if fr == 0:
-                self.root = r
-                return r
-            
-            if fr * fa < 0:
-                self.b = r
-                fb = fr
-            else:
-                self.a = r
-                fa = fr
-            
-            self.iter += 1
-        
-        self.root = r
-        return r
+    def _stop_criterion(self):
+        return abs(self.b - self.a) < 2 * self.atol or self.fr == 0
     
+    def _update(self):
+        self.root = (self.a + self.b) / 2
+        self.fr = self.func(self.root)
+
+        if self.fr * self.fa < 0:
+            self.b = self.root
+            self.fb = self.fr
+        else:
+            self.a = self.root
+            self.fa = self.fr
+    
+    def _collect(self):
+        return {'x': self.root, 'f(x)': self.fr}
+
 
 def main():
 
@@ -47,10 +39,9 @@ def main():
     num_iterations = 200
     atol = 1e-6
     
-    solver = Bisection(func, interval, num_iterations, atol, collect=True)
+    solver = BisectionMethod(func, interval, num_iterations, atol, collect=True)
     root = solver.solve()
     
-    solver.print_result()
     print_iterations(solver.get_iteration_data()) 
 
 

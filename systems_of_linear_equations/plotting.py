@@ -23,7 +23,7 @@ def plot_omega_vs_iterations(solver, bounds, step, add_opt=False, plot_rho=False
 
     if add_opt:
         solver.reset()
-        solver.omega = solver.get_omega_opt()
+        solver.omega = solver.get_optimal_omega()
         _ = solver.solve()
         
         opt = [solver.omega, solver.iter+1]

@@ -4,23 +4,6 @@ from functools import wraps
 from abc import ABC, abstractmethod
 
 
-def generate_matrix(size, symmetric=False, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
-    
-    A = np.random.rand(size, size) * 10
-    
-    for i in range(size):
-        A[i, i] = np.sum(np.abs(A[i])) + np.random.uniform(1, 10)
-    
-    if symmetric:
-            A = (A + A.T) / 2
-    
-    b = np.random.rand(size) * 10
-    
-    return A, b
-
-
 def timing(f):
     @wraps(f)
     def wrapper(*a, **kw):
@@ -31,49 +14,6 @@ def timing(f):
         print(f"Function '{f.__name__}' took {t:.6f} seconds to execute.")
         return out
     return wrapper
-
-
-def print_iterations(iteration_data, m=5, show_x=False):
-    tot = len(iteration_data)
-    
-    if show_x:
-        print(f"{'Iter':<10} {'Residual':<25} {'X'}")
-        print('-' * 100)
-    else:
-        print(f"{'Iter':<10} {'Residual':<25}")
-        print('-' * 35)
-    
-    def format_x(x):
-        return "[" + ", ".join([f"{elem:.5f}" for elem in x]) + "]"
-    
-    if tot <= 2 * m:
-        for i, (x, res) in iteration_data.items():
-            if show_x:
-                x_str = format_x(x)
-                print(f"{i+1:<10} {res:<25.14f} {x_str}")
-            else:
-                print(f"{i+1:<10} {res:<25.14f}")
-    else:
-        for i in range(m):
-            x, res = iteration_data[i]
-            if show_x:
-                x_str = format_x(x)
-                print(f"{i+1:<10} {res:<25.14f} {x_str}")
-            else:
-                print(f"{i+1:<10} {res:<25.14f}")
-        
-        if show_x:
-            print(f"{'...':<10} {'...':<25} {'...':<70}")
-        else:
-            print(f"{'...':<10} {'...':<25}")
-        
-        for i in range(tot - m, tot):
-            x, res = iteration_data[i]
-            if show_x:
-                x_str = format_x(x)
-                print(f"{i+1:<10} {res:<25.14f} {x_str}")
-            else:
-                print(f"{i+1:<10} {res:<25.14f}")
 
 
 class DirectSolver(ABC):
@@ -126,20 +66,24 @@ class IterativeBase(ABC):
         pass
     
     @abstractmethod
-    def _stop_criterion(self):
+    def _stop_criterion(self, err):
         pass
 
+    @abstractmethod
+    def _collect(self, err):
+        pass
+    
     @timing
     def solve(self):
         for self.iter in range(self.num_iterations):
             self._update()
             
-            z = self._error()
+            err = self._error()
             
             if self.collect:
-                self.data[self.iter] = (self.x.copy(), z.copy())
-            
-            if self._stop_criterion(z):
+                self.data[self.iter] = self._collect(err)
+
+            if self._stop_criterion(err):
                 print(f"Converged in {self.iter + 1} iterations.")
                 return self.x
         
@@ -152,18 +96,89 @@ class IterativeBase(ABC):
 
 
 class IterativeSolver(IterativeBase):
+    def _collect(self, err):
+        return {'x': self.x.copy(), 'error': err}
+
     def _error(self):
         x_norm = np.linalg.norm(self.x - self.x_prev, ord=np.inf)
         err_norm = np.linalg.norm(self.b - np.dot(self.A, self.x), ord=np.inf)
         return x_norm + err_norm
 
-    def _stop_criterion(self, z):
-        return z < self.atol
+    def _stop_criterion(self, err):
+        return err < self.atol
 
 
 class VariationalSolver(IterativeBase):
+    def _collect(self, err):
+        return {'x': self.x.copy(), 'error': err}
+    
     def _error(self):
         return np.linalg.norm(self.r, ord=2)
 
-    def _stop_criterion(self, z):
-        return z < self.atol
+    def _stop_criterion(self, err):
+        return err < self.atol
+    
+
+def generate_matrix(size, symmetric=False, seed=None):
+    if seed is not None:
+        np.random.seed(seed)
+    
+    A = np.random.rand(size, size) * 10
+    
+    for i in range(size):
+        A[i, i] = np.sum(np.abs(A[i])) + np.random.uniform(1, 10)
+    
+    if symmetric:
+        A = (A + A.T) / 2
+    
+    b = np.random.rand(size) * 10
+    
+    return A, b
+
+
+def print_iterations(data, m=5, show_vectors=False):
+    tot = len(data)
+    
+    keys = list(data[0].keys())
+    header = f"{'iter':<10}"
+    column_widths = {}
+    
+    def format_value(value, width):
+        if isinstance(value, (list, np.ndarray)) and show_vectors:
+            return f"[{', '.join([f'{v:.5f}' for v in value])}]".ljust(width)
+        elif isinstance(value, (int, float)):
+            return f"{value:<{width}.8e}"
+        return str(value).ljust(width)
+
+    def print_row(i, row_data):
+        row = f"{i + 1:<10}"
+        for key in keys:
+            if key not in column_widths:
+                continue
+            row += f" {format_value(row_data[key], column_widths[key])}"
+        print(row)
+    
+    for key in keys:
+        if isinstance(data[0][key], (list, np.ndarray)) and show_vectors:
+            width = len(format_value(data[0][key], width=0)) + 10
+        elif isinstance(data[0][key], (list, np.ndarray)) and not show_vectors:
+            continue
+        else:
+            width = 20
+        column_widths[key] = width
+        header += f" {key:<{width}}"
+    
+    print(header)
+    print('-' * len(header))
+    
+    if tot <= 2 * m:
+        indices = range(tot)
+    else:
+        indices = list(range(m)) + ['...'] + list(range(tot - m, tot))
+
+    for i in indices:
+        if i == '...':
+            row = f"{'...':<10}" + "".join(f" {'...'.ljust(column_widths[key])}" for key in column_widths)
+            print(row)
+        else:
+            print_row(i, data[i])

@@ -1,5 +1,6 @@
 import time
 from functools import wraps
+from abc import ABC, abstractmethod
 
 
 def timing(f):
@@ -13,50 +14,89 @@ def timing(f):
         return out
     return wrapper
 
-
-def print_iterations(iteration_data, m=5):
-    tot = len(iteration_data)
-    
-    print(f"{'Iter.i':<10} {'x_i':<25} {'f(x_i)':<25}")
-    print('-' * 60)
-    
-    if tot <= 2 * m:
-        for i, (x_i, f_x_i) in iteration_data.items():
-            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
-    else:
-        for i in range(m):
-            x_i, f_x_i = iteration_data[i]
-            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
-        
-        print(f"{'...':<10} {'...':<25} {'...':<25}")
-        
-        for i in range(tot - m, tot):
-            x_i, f_x_i = iteration_data[i]
-            print(f"{i+1:<10} {x_i:<25.14f} {f_x_i:<25.14f}")
             
-            
-class BaseSolver:
+class SolverBase(ABC):
     def __init__(self, n=100, atol=1e-6, collect=True):
         self.n = n
         self.atol = atol
         self.collect = collect
+        self.reset()
         
+    def reset(self):
         self.data = {}
         self.iter = 0
         self.root = None
-        
+    
+    @abstractmethod
+    def _update(self):
+        pass
+    
+    @abstractmethod
+    def _stop_criterion(self):
+        pass
+    
+    @abstractmethod
+    def _collect(self):
+        pass
+    
     @timing
-    def solve(self):
-        raise NotImplementedError("Must implement this method.")
+    def solve(self):        
+        for self.iter in range(self.n):
+            self._update()
+            
+            if self.collect:
+                self.data[self.iter] = self._collect()
 
+            if self._stop_criterion():
+                print(f"\nConverged in {self.iter+1} iteration(s).")
+                return self.root
+            
+            self.iter += 1
+
+        print(f"\nMaximum iterations reached ({self.n}).")
+        return self.root
+    
     def get_iteration_data(self):
         assert self.collect, "Iteration data is not available unless collect=True."
         return self.data
+
+
+def print_iterations(data, m=5):
+    tot = len(data)
     
-    def print_result(self):
-        if self.root is None:
-            print("Run the solve method first.")
-        elif self.iter < self.n:
-            print(f"Root found: {self.root:.10f} after {self.iter+1} iterations.")
+    keys = list(data[0].keys())
+    header = f"{'iter':<10}"
+    column_widths = {}
+    
+    def format_value(value, width):
+        if isinstance(value, (int, float)):
+            return f"{value:<{width}.8f}"
+        return str(value).ljust(width)
+
+    def print_row(i, row_data):
+        row = f"{i + 1:<10}"
+        for key in keys:
+            if key not in column_widths:
+                continue
+            row += f" {format_value(row_data[key], column_widths[key])}"
+        print(row)
+    
+    for key in keys:
+        width = 20
+        column_widths[key] = width
+        header += f" {key:<{width}}"
+    
+    print(header)
+    print('-' * len(header))
+    
+    if tot <= 2 * m:
+        indices = range(tot)
+    else:
+        indices = list(range(m)) + ['...'] + list(range(tot - m, tot))
+
+    for i in indices:
+        if i == '...':
+            row = f"{'...':<10}" + "".join(f" {'...'.ljust(column_widths[key])}" for key in column_widths)
+            print(row)
         else:
-            print(f"Maximum iterations ({self.n}) reached. Last approximation: {self.root:.10f}")
+            print_row(i, data[i])

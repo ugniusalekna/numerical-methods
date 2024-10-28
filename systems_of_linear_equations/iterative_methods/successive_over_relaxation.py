@@ -35,11 +35,14 @@ def optimal_omega(A):
 class SORMethod(IterativeSolver):
     def __init__(self, A, b, omega=None, optimize_omega=False, **kwargs):
         super().__init__(A, b, **kwargs)
-        self.omega = omega if omega is not None else (optimal_omega(A) if not optimize_omega else 1.0)
+        self.omega = omega if omega is not None else (self.get_optimal_omega() if not optimize_omega else 1.0)
         
         self.optimize_omega = optimize_omega
         self.x_prev, self.x_prev_prev = None, None
 
+    def get_optimal_omega(self):
+        return optimal_omega(self.A)
+    
     def get_spectral_radius(self, omega):
         return spectral_radius(self.A, omega)
     
@@ -87,7 +90,7 @@ def main():
     solver = SORMethod(A, b, omega=omega, atol=0.0001, num_iterations=10000, collect=True)
     solution = solver.solve()
     
-    print_iterations(solver.get_iteration_data(), m=5, show_x=True)
+    print_iterations(solver.get_iteration_data(), m=5, show_vectors=True)
     
     plot_omega_vs_iterations(solver, bounds=[0.1, 2.0], step=0.01, add_opt=True, plot_rho=True)
 

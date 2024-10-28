@@ -37,7 +37,7 @@ def main():
     solver = ConjugateGradient(A, b, atol=0.0001, num_iterations=10000, collect=True)
     solution = solver.solve()
 
-    print_iterations(solver.get_iteration_data(), m=5, show_x=True)
+    print_iterations(solver.get_iteration_data(), m=5, show_vectors=True)
 
 
 if __name__ == '__main__':

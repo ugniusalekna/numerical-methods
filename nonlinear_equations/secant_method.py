@@ -1,36 +1,28 @@
-from utils import BaseSolver, timing, print_iterations
+from utils import SolverBase, print_iterations
 
 
-class Secant(BaseSolver):
+class Secant(SolverBase):
     def __init__(self, func, x0, x1, num_iterations=100, atol=1e-6, collect=True):
         super().__init__(num_iterations, atol, collect)
-        self.f = func
+        self.func = func
         self.x0 = x0
         self.x1 = x1
         
-    @timing
-    def solve(self):
-                
-        while self.iter < self.n:
-            fx0 = self.f(self.x0)
-            fx1 = self.f(self.x1)
-                        
-            r = self.x1 - fx1 * (self.x1 - self.x0) / (fx1 - fx0)
-            
-            if self.collect:
-                self.data[self.iter] = (self.x1, r)
-            
-            if abs(r - self.x1) < self.atol:
-                self.root = r
-                return r
+        self.fx0 = self.func(self.x0)
+        self.fx1 = self.func(self.x1)
+        
+    def _stop_criterion(self):
+        return abs(self.x0 - self.x1) < self.atol
+        
+    def _update(self):
+        self.root = self.x1 - self.fx1 * (self.x1 - self.x0) / (self.fx1 - self.fx0)
+        
+        self.x0, self.fx0 = self.x1, self.fx1
+        self.x1, self.fx1 = self.root, self.func(self.root)
 
-            self.x0 = self.x1
-            self.x1 = r
-            self.iter += 1
-            
-        self.root = r
-        return r
-    
+    def _collect(self):
+        return {'x': self.root}
+
 
 def main():
 
@@ -47,7 +39,6 @@ def main():
     solver = Secant(f, x0, x1, num_iterations, atol, collect=True)
     root = solver.solve()
     
-    solver.print_result()
     print_iterations(solver.get_iteration_data())
     
 

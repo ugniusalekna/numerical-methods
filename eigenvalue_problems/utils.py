@@ -67,7 +67,7 @@ class IterativeBase(ABC):
                 self.data[self.iter] = self._collect(err)
             
             if self._stop_criterion(err):
-                print(f"\nConverged in {self.iter + 1} iteration(s).")
+                print(f"\nConverged in {self.iter+1} iteration(s).")
                 return self._return()
         
         print(f"\nMaximum iterations reached ({self.num_iterations}).")
@@ -82,14 +82,14 @@ def print_iterations(data, m=5, show_vectors=False):
     tot = len(data)
     
     keys = list(data[0].keys())
-    header = f"{'Iter':<10}"
+    header = f"{'iter':<10}"
     column_widths = {}
     
     def format_value(value, width):
         if isinstance(value, (list, np.ndarray)) and show_vectors:
             return f"[{', '.join([f'{v:.5f}' for v in value])}]".ljust(width)
         elif isinstance(value, (int, float)):
-            return f"{value:<{width}.8f}"
+            return f"{value:<{width}.8e}"
         return str(value).ljust(width)
 
     def print_row(i, row_data):

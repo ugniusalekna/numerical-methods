@@ -1,34 +1,25 @@
 import numpy as np
 
-from utils import BaseSolver, timing, print_iterations
+from utils import SolverBase, print_iterations
 
 
-class FixedPointIteration(BaseSolver):
+class FixedPointIteration(SolverBase):
     def __init__(self, func, x0, num_iterations=100, atol=1e-6, collect=True):
         super().__init__(num_iterations, atol, collect)
-        self.f = func
+        self.func = func
         self.x0 = x0
-
-    @timing
-    def solve(self):
-        x = self.x0
-        
-        while self.iter < self.n:
-            r = self.f(x)
-            
-            if self.collect:
-                self.data[self.iter] = (x, r)
-            
-            if abs(r - x) < self.atol:
-                self.root = r
-                return r
-     
-            x = r
-            self.iter += 1
-            
-        self.root = r
-        return r
+        self.root = self.x0
     
+    def _stop_criterion(self):
+        return abs(self.root - self.root_prev) < self.atol
+        
+    def _update(self):
+        self.root_prev = self.root
+        self.root = self.func(self.root)
+        
+    def _collect(self):
+        return {'x': self.root}
+
 
 def main():
 
@@ -42,8 +33,7 @@ def main():
     solver = FixedPointIteration(g, x0, num_iterations, atol, collect=True)
     root = solver.solve()
     
-    solver.print_result()
-    print_iterations(solver.get_iteration_data()) 
+    print_iterations(solver.get_iteration_data())
 
 
 if __name__ == '__main__':

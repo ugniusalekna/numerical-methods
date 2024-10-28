@@ -27,7 +27,7 @@ class BisectionMethod(SolverBase):
             self.fa = self.fr
     
     def _collect(self):
-        return {'x': self.root, 'f(x)': self.fr}
+        return {'x': self.root}
 
 
 def main():

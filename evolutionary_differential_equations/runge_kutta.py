@@ -1,27 +1,15 @@
 import numpy as np
 
-from utils import timing, print_iteration_table
+from utils import EvolutionaryBase, print_iteration_table
 from plotting import show_plot
 
 
-class ODESolver:
-    def __init__(self, func, y0, t0=0, h=0.01, butcher_tableau=None, collect=True, true_solution=None):
-        self.func = func
-        self.h = h
-        self.t = t0
-        self.y0 = y0
-        self.y_values = [y0]
-        self.t_values = [t0]
+class RungeKuttaSolver(EvolutionaryBase):
+    def __init__(self, func, y0, t0, h=0.01, butcher_tableau=None, collect=True, true_solution=None):
+        super().__init__(func, y0, t0, h, collect, true_solution)
         self.A, self.b, self.c = butcher_tableau
-        self.collect = collect
-        self.data = {}
-        self.true_sol = true_solution
         
-    def _update(self, y, t):
-        self.y_values.append(y)
-        self.t_values.append(t)
-
-    def _runge_kutta_step(self, y, t, h):
+    def _step(self, y, t, h):
         s = len(self.b)
         k = np.zeros((s, len(y)), dtype=float)
         
@@ -31,44 +19,6 @@ class ODESolver:
             k[i] = self.func(ti, yi)
         
         return y + h * np.dot(self.b, k)
-    
-    @timing
-    def integrate(self, tf):
-        y = self.y0
-
-        if self.collect:
-            entry = {'t': self.t, 'y': y}
-            
-            if self.true_sol:
-                y_true = self.true_sol(self.t)
-                err = np.linalg.norm(y - y_true, ord=2)
-                entry.update({'y_true': y_true, 'error': err})
-                
-            self.data[0] = entry
-            i = 1
-
-        while self.t < tf:
-            h = min(self.h, tf - self.t)
-            y = self._runge_kutta_step(y, self.t, h)
-            self.t = self.t + h
-            self._update(y, self.t)
-            
-            if self.collect:
-                entry = {'t': self.t, 'y': y}
-                
-                if self.true_sol:
-                    y_true = self.true_sol(self.t)
-                    err = np.linalg.norm(y - y_true, ord=2)
-                    entry.update({'y_true': y_true, 'error': err})
-                    
-                self.data[i] = entry
-                i += 1
-        
-        return np.array(self.y_values), np.array(self.t_values)
-    
-    def get_iteration_data(self):
-        assert self.collect, "Iteration data not available unless collect=True."
-        return self.data
 
 
 def set_method(method):
@@ -113,7 +63,7 @@ def set_method(method):
 
 def solve_ivp(func, t_span, y0, method='rk1', h=0.001, return_data=False, solution=None):
     tableau = set_method(method)
-    solver = ODESolver(func, y0=y0, t0=t_span[0], h=h, butcher_tableau=tableau, true_solution=solution)
+    solver = RungeKuttaSolver(func, y0=y0, t0=t_span[0], h=h, butcher_tableau=tableau, true_solution=solution)
     ys, ts = solver.integrate(tf=t_span[1])
     
     if return_data:
@@ -121,7 +71,6 @@ def solve_ivp(func, t_span, y0, method='rk1', h=0.001, return_data=False, soluti
         return (ys, ts), data
     
     return (ys, ts), None
-        
 
 
 def main():

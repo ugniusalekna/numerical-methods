@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from matplotlib.widgets import AxesWidget, RadioButtons
+from matplotlib.widgets import AxesWidget
 from matplotlib import cbook
 import scienceplots
 
@@ -57,17 +57,15 @@ def show_plot(ax, x_data, y_data,
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
         if isinstance(colors[i], list) and len(colors[i]) == len(x):
-            # If colors[i] is a list of individual colors for each point
             for xi, yi, color in zip(x, y, colors[i]):
                 ax.plot(xi, yi, 
-                        label=labels[i] if xi == x[0] else "",  # Only label the first point for legend
+                        label=labels[i] if xi == x[0] else "",
                         linestyle=line_styles[i], 
                         color=color, 
                         marker=markers[i], 
                         markersize=marker_sizes[i],
                         linewidth=line_widths[i])
         else:
-            # Use the same color for the entire series
             ax.plot(x, y, 
                     label=labels[i],
                     linestyle=line_styles[i], 

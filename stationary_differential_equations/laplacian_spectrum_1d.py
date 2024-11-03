@@ -74,6 +74,11 @@ def plot_eigvals(eigvals, idx=None, ax=None):
         set_int_xticks=True,
     )
     
+    x_vals = np.arange(1, n+1)
+    y_vals = (np.pi * x_vals/(n+1)) ** 2
+    ax.plot(x_vals, y_vals, label=r'$y = (\frac{\pi x}{N+1})^2$', linestyle='--', color='g')
+    ax.legend(loc="upper left")
+    
     if ax is not None:
         plt.draw()
 
@@ -117,7 +122,7 @@ def plot_with_slider(N):
     slider_beta = Slider(ax_slider_b, r'Parameter $\beta$', -5.0, 5.0, valinit=0.0, valstep=0.1, color='blue')
 
     ax_radio_order = plt.axes([0.12, 0.05, 0.16, 0.05], facecolor='lightgray')
-    radio_order =  CustomRadioButtons(ax_radio_order ,['2','4','6', '8'], active=0, orientation="horizontal", label_spacing=0.01)
+    radio_order =  CustomRadioButtons(ax_radio_order, ['2','4','6','8'], active=0, orientation="horizontal", label_spacing=0.01)
     order_text = fig.text(0.12, 0.11, rf'Order of approximation $\mathcal{{O}}(h^{{{current_order[0]}}})$', fontsize=12, weight='bold')
 
     ax_next_button = plt.axes([0.81, 0.05, 0.1, 0.05])

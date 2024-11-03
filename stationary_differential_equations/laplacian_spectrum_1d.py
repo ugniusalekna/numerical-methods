@@ -43,13 +43,13 @@ def create_matrix(N, alpha=None, beta=None, order=2):
 
 
 def solve_eigen(A):
-    eigvals, eigvecs = la.eigh(A)
+    eigvals, eigvects = la.eigh(A)
 
-    for i in range(eigvecs.shape[1]):
-        if np.sum(eigvecs[:, i]) < 0:
-            eigvecs[:, i] = -eigvecs[:, i]
+    for i in range(eigvects.shape[1]):
+        if np.sum(eigvects[:, i]) < 0:
+            eigvects[:, i] = -eigvects[:, i]
 
-    return eigvals, eigvecs
+    return eigvals, eigvects
 
 
 def plot_eigvals(eigvals, idx=None, ax=None):
@@ -78,15 +78,15 @@ def plot_eigvals(eigvals, idx=None, ax=None):
         plt.draw()
 
 
-def plot_eigvects(eigvecs, idx, ax=None):
+def plot_eigvects(eigvects, idx, ax=None):
     y_lim = (-1.0, 1.0)
-    n = eigvecs.shape[0]
+    n = eigvects.shape[0]
     
     ax.clear()
     show_plot(
         ax=ax,
         x_data=np.arange(1, n+1),
-        y_data=eigvecs[:, idx],
+        y_data=eigvects[:, idx],
         labels=[rf"Eigenvector $v_{{{idx+1}}}$ corresponding to $\lambda_{{{idx+1}}}$"],
         title=rf"Eigenvectors of matrix $T_{{{n}}}$",
         x_label=r"$j = 1,...,N$",
@@ -133,17 +133,17 @@ def plot_with_slider(N):
         
         A = create_matrix(N, alpha=alpha, beta=beta, order=order)
         
-        global eigvals, eigvecs
-        eigvals, eigvecs = solve_eigen(A)
+        global eigvals, eigvects
+        eigvals, eigvects = solve_eigen(A)
         
-        global num_eigvecs
-        num_eigvecs = eigvecs.shape[1]
+        global num_eigvects
+        num_eigvects = eigvects.shape[1]
 
         ax_vals.clear()
         ax_vects.clear()
         
         plot_eigvals(eigvals, idx=current_index[0], ax=ax_vals)
-        plot_eigvects(eigvecs, idx=current_index[0], ax=ax_vects)
+        plot_eigvects(eigvects, idx=current_index[0], ax=ax_vects)
 
     def update_order(label):
         current_order[0] = int(label)
@@ -155,9 +155,9 @@ def plot_with_slider(N):
             current_index[0] = 0
         else:
             step = 1 if forward else -1
-            current_index[0] = (current_index[0] + step) % num_eigvecs
+            current_index[0] = (current_index[0] + step) % num_eigvects
 
-        plot_eigvects(eigvecs, idx=current_index[0], ax=ax_vects)
+        plot_eigvects(eigvects, idx=current_index[0], ax=ax_vects)
         plot_eigvals(eigvals, idx=current_index[0], ax=ax_vals)
 
     update(None) # init

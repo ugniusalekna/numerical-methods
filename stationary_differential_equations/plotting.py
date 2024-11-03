@@ -49,7 +49,8 @@ def show_plot(ax, x_data, y_data,
     if markers is None:
         markers = [None] * len(y_data)
     if marker_sizes is None:
-        marker_sizes = [6] * len(y_data)
+        max_points = max(len(y) for y in y_data)
+        marker_sizes = [6 - 5 * min(1, max_points / 200) for _ in range(len(y_data))]
     if line_widths is None:
         line_widths = [1.5] * len(y_data)
     if error_bars is None:

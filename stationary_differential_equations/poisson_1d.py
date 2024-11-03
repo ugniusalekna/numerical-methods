@@ -47,7 +47,7 @@ class Poisson1DBase(ABC):
         plt.show()
 
 
-class DirichletPoisson1DSolver(Poisson1DBase):
+class DirichletPoisson1D(Poisson1DBase):
     def __init__(self, N, f, u_a, u_b, domain=(0, 1)):
         super().__init__(N, f, domain)
         self.u_a = u_a
@@ -71,7 +71,7 @@ class DirichletPoisson1DSolver(Poisson1DBase):
         return self.u
 
 
-class RobinPoisson1DSolver(Poisson1DBase):
+class RobinPoisson1D(Poisson1DBase):
     def __init__(self, N, f, alpha, beta, gamma, delta, domain=(0, 1)):
         super().__init__(N, f, domain)
         self.alpha, self.beta = alpha, beta
@@ -100,8 +100,8 @@ def main():
     def func(x):
         return -10 * np.ones_like(x)
 
-    # solver = DirichletPoisson1DSolver(N=10, f=func, u_a=0, u_b=0)
-    solver = RobinPoisson1DSolver(N=100, f=func, alpha=1, beta=0.5, gamma=0, delta=0)
+    # solver = DirichletPoisson1D(N=10, f=func, u_a=0, u_b=0)
+    solver = RobinPoisson1D(N=100, f=func, alpha=1, beta=0.5, gamma=0, delta=0)
     solver.solve()
     solver.plot_solution()
     

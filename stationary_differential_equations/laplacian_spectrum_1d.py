@@ -11,7 +11,8 @@ def create_matrix(N, alpha=None, beta=None, order=2):
         2: [-1.0, 2.0, -1.0],
         4: [1/12, -4/3, 5/2, -4/3, 1/12],
         6: [-1/90, 3/20, -3/2, 49/18, -3/2, 3/20, -1/90],
-        8: [1/560, -8/315, 1/5, -8/5, 205/72, -8/5, 1/5, -8/315, 1/560]
+        8: [1/560, -8/315, 1/5, -8/5, 205/72, -8/5, 1/5, -8/315, 1/560],
+        10: [-1/3150, 5/1008, -5/126, 5/21, -5/3, 5269/1800, -5/3, 5/21, -5/126, 5/1008, -1/3150]
     }
 
     if order not in coeffs:
@@ -121,8 +122,8 @@ def plot_with_slider(N):
     ax_slider_b = plt.axes([0.39, 0.05, 0.25, 0.02], facecolor='lightgray')
     slider_beta = Slider(ax_slider_b, r'Parameter $\beta$', -5.0, 5.0, valinit=0.0, valstep=0.1, color='blue')
 
-    ax_radio_order = plt.axes([0.12, 0.05, 0.16, 0.05], facecolor='lightgray')
-    radio_order =  CustomRadioButtons(ax_radio_order, ['2','4','6','8'], active=0, orientation="horizontal", label_spacing=0.01)
+    ax_radio_order = plt.axes([0.12, 0.05, 0.155, 0.05], facecolor='lightgray')
+    radio_order =  CustomRadioButtons(ax_radio_order, ['2','4','6','8', '10'], active=0, orientation="horizontal", label_spacing=0.01)
     order_text = fig.text(0.12, 0.11, rf'Order of approximation $\mathcal{{O}}(h^{{{current_order[0]}}})$', fontsize=12, weight='bold')
 
     ax_next_button = plt.axes([0.81, 0.05, 0.1, 0.05])

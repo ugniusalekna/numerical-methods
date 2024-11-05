@@ -18,7 +18,7 @@ class Poisson1DBase(ABC):
         self.x = np.linspace(self.a, self.b, N + 2)
         self.u = np.zeros(self.N+2)
         
-        self.A = None
+        self.T = None
 
     @abstractmethod
     def create_matrix(self):
@@ -55,14 +55,14 @@ class DirichletPoisson1D(Poisson1DBase):
         self.create_matrix()
 
     def create_matrix(self):
-        self.A = create_matrix(N=self.N, alpha=1.0, beta=0.0, order=2)
+        self.T = create_matrix(N=self.N, alpha=1.0, beta=0.0, order=2)
 
     def solve(self):
         f_vec = self.f(self.x[1:-1]) * self.h**2
         f_vec[0] += self.u_a
         f_vec[-1] += self.u_b
         
-        u_int = la.solve(self.A, f_vec)
+        u_int = la.solve(self.T, f_vec)
         
         self.u[1:-1] = u_int
         self.u[0] = self.u_a
@@ -79,14 +79,14 @@ class RobinPoisson1D(Poisson1DBase):
         self.create_matrix()
 
     def create_matrix(self):
-        self.A = create_matrix(N=self.N, alpha=self.alpha, beta=self.beta, order=2)
+        self.T = create_matrix(N=self.N, alpha=self.alpha, beta=self.beta, order=2)
 
     def solve(self):
         f_vec = self.f(self.x[1:-1]) * self.h**2
         f_vec[0] += self.gamma * self.h / (self.alpha * self.h + self.beta)
         f_vec[-1] += self.delta * self.h / (self.alpha * self.h + self.beta)
         
-        u_int = la.solve(self.A, f_vec)
+        u_int = la.solve(self.T, f_vec)
         
         self.u[1:-1] = u_int
         self.u[0] = (self.gamma * self.h + self.u[1] * self.beta) / (self.alpha * self.h + self.beta)

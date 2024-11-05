@@ -7,8 +7,8 @@ from plotting import show_plot, CustomRadioButtons
 from utils import create_matrix
 
 
-def solve_eigen(A):
-    eigvals, eigvects = la.eigh(A)
+def solve_eigen(T):
+    eigvals, eigvects = la.eigh(T)
 
     for i in range(eigvects.shape[1]):
         if np.sum(eigvects[:, i]) < 0:
@@ -18,32 +18,65 @@ def solve_eigen(A):
 
 
 def plot_eigvals(eigvals, idx=None, ax=None):
+    if ax is None:
+        fig, ax = plt.subplots()
+
     n = len(eigvals)
-    colors = ['b'] * n
+
+    negative_eigvals = [val for val in eigvals if val < 0]
+    zero_eigvals = [val for val in eigvals if np.isclose(val, 0, atol=1e-5)]
+    positive_eigvals = [val for val in eigvals if val > 0]
+
+    x_vals_neg = np.arange(1, len(negative_eigvals) + 1)
+    x_vals_zero = np.arange(len(negative_eigvals) + 1, len(negative_eigvals) + len(zero_eigvals) + 1)
+    x_vals_pos = np.arange(len(negative_eigvals) + len(zero_eigvals) + 1, n + 1)
+
+    x_data, y_data, labels, colors = [], [], [], []
+
+    if len(negative_eigvals) > 0:
+        x_data.extend(x_vals_neg)
+        y_data.extend(negative_eigvals)
+        labels.extend([r'$\lambda_i < 0$'] * len(negative_eigvals))
+        colors.extend(['orange'] * len(negative_eigvals))
+
+    if len(zero_eigvals) > 0:
+        x_data.extend(x_vals_zero)
+        y_data.extend(zero_eigvals)
+        labels.extend([r'$\lambda_i = 0$'] * len(zero_eigvals))
+        colors.extend(['g'] * len(zero_eigvals))
+        
+    if len(positive_eigvals) > 0:
+        x_data.extend(x_vals_pos)
+        y_data.extend(positive_eigvals)
+        labels.extend([r'$\lambda_i > 0$'] * len(positive_eigvals))
+        colors.extend(['b'] * len(positive_eigvals))
+
     if idx is not None:
         colors[idx] = 'r'
-
+    
     ax.clear()
     show_plot(
         ax=ax,
-        x_data=np.arange(1, n+1),
-        y_data=[eigvals],
-        labels=[r"Eigenvalues $\lambda_i$"],
+        x_data=x_data,
+        y_data=y_data,
+        labels=labels,
         title=rf"Eigenvalues of matrix $T_{{{n}}}$",
-        x_label=r"$i = 1,...,N$",
+        x_label=r"$i = 1,\dots,N$",
         y_label=r"$\lambda_i$",
-        markers=['o'],
-        line_styles=['none'],
-        colors=[colors],
+        colors=colors,
+        markers='o',
+        marker_sizes=6 - 5 * min(1, n / 200),
         legend_loc="upper left",
         set_int_xticks=True,
+        x_lim=[-10, n+10],
+        y_lim=[-10, 10],
     )
-    
-    x_vals = np.arange(1, n+1)
-    y_vals = (np.pi * x_vals/(n+1)) ** 2
-    ax.plot(x_vals, y_vals, label=r'$y = (\frac{\pi x}{N+1})^2$', linestyle='--', color='g')
+
+    x_vals_theory = np.arange(1, n + 1)
+    y_vals_theory = (np.pi * x_vals_theory / (n + 1)) ** 2
+    ax.plot(x_vals_theory, y_vals_theory, label=r'$\lambda = \left(\frac{\pi i}{N+1}\right)^2$', linestyle='--', color='g')
     ax.legend(loc="upper left")
-    
+
     if ax is not None:
         plt.draw()
 
@@ -59,11 +92,12 @@ def plot_eigvects(eigvects, idx, ax=None):
         y_data=eigvects[:, idx],
         labels=[rf"Eigenvector $v_{{{idx+1}}}$ corresponding to $\lambda_{{{idx+1}}}$"],
         title=rf"Eigenvectors of matrix $T_{{{n}}}$",
-        x_label=r"$j = 1,...,N$",
+        x_label=r"$j = 1,\dots,N$",
         y_label=rf"Coordinates $v^j_{{{idx+1}}}$",
-        markers=['o'],
-        line_styles=['-'],
-        colors=[plt.get_cmap('tab10')((idx%10))],
+        markers='o',
+        marker_sizes=6 - 5 * min(1, n / 200),
+        line_styles='-',
+        colors=plt.get_cmap('tab10')((idx%10)),
         legend_loc="upper left",
         y_lim=y_lim,
         set_int_xticks=True,
@@ -73,7 +107,7 @@ def plot_eigvects(eigvects, idx, ax=None):
         plt.draw()
 
 
-def plot_with_slider(N):
+def visualize_spectrum(N):
     current_index = [0]
     current_order = [2]
 
@@ -96,15 +130,15 @@ def plot_with_slider(N):
     next_button = Button(ax_next_button, 'Next')
     prev_button = Button(ax_prev_button, 'Prev')
     
-    def update(val):
+    def update(val=0.0):
         alpha = slider_alpha.val
         beta = slider_beta.val
         order = current_order[0]
         
-        A = create_matrix(N, alpha=alpha, beta=beta, order=order)
+        T = create_matrix(N, alpha=alpha, beta=beta, order=order)
         
         global eigvals, eigvects
-        eigvals, eigvects = solve_eigen(A)
+        eigvals, eigvects = solve_eigen(T)
         
         global num_eigvects
         num_eigvects = eigvects.shape[1]
@@ -118,22 +152,19 @@ def plot_with_slider(N):
     def update_order(label):
         current_order[0] = int(label)
         order_text.set_text(rf'Order of approximation $\mathcal{{O}}(h^{{{current_order[0]}}})$')
-        update(None)
+        update()
 
-    def update_plot(forward=None):
-        if forward is None:
-            current_index[0] = 0
-        else:
-            step = 1 if forward else -1
-            current_index[0] = (current_index[0] + step) % num_eigvects
+    def update_plot(forward):
+        step = 1 if forward else -1
+        current_index[0] = (current_index[0] + step) % num_eigvects
 
         plot_eigvects(eigvects, idx=current_index[0], ax=ax_vects)
         plot_eigvals(eigvals, idx=current_index[0], ax=ax_vals)
 
-    update(None) # init
+    update() # init
 
-    next_button.on_clicked(lambda event: update_plot(forward=True))
-    prev_button.on_clicked(lambda event: update_plot(forward=False))
+    next_button.on_clicked(lambda e: update_plot(forward=True))
+    prev_button.on_clicked(lambda e: update_plot(forward=False))
 
     slider_alpha.on_changed(update)
     slider_beta.on_changed(update)
@@ -143,9 +174,9 @@ def plot_with_slider(N):
 
 
 def main():
-    N = 101
-    plot_with_slider(N)
-
+    N = 5
+    visualize_spectrum(N)
+    
 
 if __name__ == '__main__':
     main()

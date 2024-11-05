@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.widgets import AxesWidget
@@ -8,76 +9,88 @@ plt.style.use('science')
 
 
 def show_plot(ax, x_data, y_data, 
-                   labels=None, 
-                   title=None, 
-                   x_label=None, 
-                   y_label=None, 
-                   secondary_y_data=None, 
-                   y2_label=None,
-                   legend_loc="best", 
-                   line_styles=None, 
-                   colors=None, 
-                   markers=None, 
-                   marker_sizes=None,
-                   line_widths=None,
-                   log_scale_x=False, 
-                   log_scale_y=False,
-                   grid=True,
-                   grid_style='--',
-                   grid_color='gray',
-                   grid_alpha=0.5,
-                   x_lim=None,
-                   y_lim=None,
-                   y2_lim=None,
-                   error_bars=None, 
-                   error_capsize=3,
-                   font_size=12,
-                   secondary_y_font_size=10,
-                   secondary_y_color='tab:red',
-                   set_int_xticks=False):
-    if not isinstance(y_data, list):
+              labels=None, 
+              title=None, 
+              x_label=None, 
+              y_label=None, 
+              secondary_y_data=None, 
+              y2_label=None,
+              legend_loc="best", 
+              line_styles=None, 
+              colors=None, 
+              markers=None, 
+              marker_sizes=None,
+              line_widths=None,
+              log_scale_x=False, 
+              log_scale_y=False,
+              grid=True,
+              grid_style='--',
+              grid_color='gray',
+              grid_alpha=0.5,
+              x_lim=None,
+              y_lim=None,
+              y2_lim=None,
+              error_bars=None, 
+              error_capsize=3,
+              font_size=12,
+              secondary_y_font_size=10,
+              secondary_y_color='tab:red',
+              set_int_xticks=False):
+
+    nested = isinstance(y_data[0], (list, np.ndarray))
+
+    if not nested:
+        x_data = [x_data]
         y_data = [y_data]
-    if not isinstance(x_data, list):
-        x_data = [x_data] * len(y_data)
-    
-    if labels is None:
-        labels = [f"Series {i+1}" for i in range(len(y_data))]
-    if line_styles is None:
-        line_styles = ['-'] * len(y_data)
-    if colors is None:
-        colors = [None] * len(y_data)
-    if markers is None:
-        markers = [None] * len(y_data)
-    if marker_sizes is None:
-        max_points = max(len(y) for y in y_data)
-        marker_sizes = [6 - 5 * min(1, max_points / 200) for _ in range(len(y_data))]
-    if line_widths is None:
-        line_widths = [1.5] * len(y_data)
-    if error_bars is None:
-        error_bars = [None] * len(y_data)
+
+    n_series = len(y_data)
+
+    def nest(attr, default_value):
+        if attr is None:
+            return [default_value] * n_series
+        else:
+            return [attr] * n_series
+
+    labels = nest(labels, f"Series")
+    line_styles = nest(line_styles, '-')
+    colors = nest(colors, None)
+    markers = nest(markers, None)
+    marker_sizes = nest(marker_sizes, 6)
+    line_widths = nest(line_widths, 1.5)
+    error_bars = nest(error_bars, None)
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
-        if isinstance(colors[i], list) and len(colors[i]) == len(x):
-            for xi, yi, color in zip(x, y, colors[i]):
-                ax.plot(xi, yi, 
-                        label=labels[i] if xi == x[0] else "",
-                        linestyle=line_styles[i], 
-                        color=color, 
-                        marker=markers[i], 
-                        markersize=marker_sizes[i],
-                        linewidth=line_widths[i])
+ 
+        lnstl = line_styles[i]
+        col = colors[i]
+        mrk = markers[i]
+        mrksz = marker_sizes[i]
+        lnwd = line_widths[i]
+        errb = error_bars[i]
+        lbl = labels[i]
+
+        use_scatter = isinstance(col, list) and len(col) == len(x)
+        
+        if use_scatter:
+            used_labels = set()
+            for j, (xi, yi) in enumerate(zip(x, y)):
+                l = lbl[j] if lbl[j] not in used_labels else None
+                if l is not None:
+                    used_labels.add(l)
+                ax.scatter(xi, yi, c=col[j], marker=mrk, s=mrksz, linewidth=lnwd, label=l)
+
         else:
             ax.plot(x, y, 
-                    label=labels[i],
-                    linestyle=line_styles[i], 
-                    color=colors[i], 
-                    marker=markers[i], 
-                    markersize=marker_sizes[i],
-                    linewidth=line_widths[i])
-        
-        if error_bars[i] is not None:
-            ax.errorbar(x, y, yerr=error_bars[i], fmt='none', color=colors[i],
-                        capsize=error_capsize, elinewidth=line_widths[i])
+                    label=lbl,
+                    linestyle=lnstl, 
+                    color=col,
+                    marker=mrk, 
+                    markersize=mrksz,
+                    linewidth=lnwd)
+
+        if errb is not None:
+            ax.errorbar(x, y, yerr=errb, fmt='none', color=col if not isinstance(col, list) else 'k',
+                        capsize=error_capsize, elinewidth=lnwd)
 
     if log_scale_x:
         ax.set_xscale('log')
@@ -109,7 +122,8 @@ def show_plot(ax, x_data, y_data,
             ax2.set_ylim(y2_lim)
         ax2.tick_params(axis='y', labelcolor=secondary_y_color)
     
-    ax.legend(loc=legend_loc, fontsize=font_size - 2)
+    if labels:
+        ax.legend(loc=legend_loc, fontsize=font_size - 2)
     
     if set_int_xticks:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))

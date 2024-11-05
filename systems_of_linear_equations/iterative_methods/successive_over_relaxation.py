@@ -85,14 +85,14 @@ def main():
 
     b = np.array([0.05, 0.1, 0.05])
 
-    omega = None
+    omega = 1.524
     
     solver = SORMethod(A, b, omega=omega, atol=0.0001, num_iterations=10000, collect=True)
     solution = solver.solve()
     
     print_iterations(solver.get_iteration_data(), m=5, show_vectors=True)
     
-    plot_omega_vs_iterations(solver, bounds=[0.1, 2.0], step=0.01, add_opt=True, plot_rho=True)
+    plot_omega_vs_iterations(solver, bounds=[1.25, 1.75], step=0.01, add_opt=True, plot_rho=True)
 
 
 if __name__ == '__main__':

@@ -69,7 +69,7 @@ def plot_eigvals(eigvals, idx=None, ax=None):
         legend_loc="upper left",
         set_int_xticks=True,
         x_lim=[-10, n+10],
-        y_lim=[-10, 10],
+        y_lim=[-1, 10],
     )
 
     x_vals_theory = np.arange(1, n + 1)
@@ -174,7 +174,7 @@ def visualize_spectrum(N):
 
 
 def main():
-    N = 5
+    N = 100
     visualize_spectrum(N)
     
 

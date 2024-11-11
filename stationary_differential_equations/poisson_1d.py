@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 np.set_printoptions(linewidth=150)
 
-from plotting import show_plot
-from utils import create_matrix
+from utils.plotting import show_plot
+from utils.general import create_matrix
 
 
 class Poisson1DBase(ABC):
